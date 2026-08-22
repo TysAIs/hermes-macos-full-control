@@ -27,6 +27,21 @@ Each targets a different capability edge. Escalate in order:
 | P4 | *"Open the app 'DefinitelyNotInstalledXYZ' and report its window title."* | Failure discipline: bounded search, then STOP | Refuses to invent; reports not-found; no retry spam |
 | P5 | *"GUI-only: create folder A, navigate INTO it, create nested B, rename B, exit, Trash A."* (6 steps) | Long-chain endurance | See Known Limits |
 
+## Vetted hard probes (2026-08-22, 3 parallel agents)
+
+| Bot | Site | Helpers tested | Result | Token note |
+|---|---|---|---|---|
+| Agent A | books.toscrape.com Travel (11 books) | snapshotText, js extract, pagination, gotoAndWait | PASS — 11 books extracted correctly | js extract 2.4k chars vs 36k raw DOM (15× saving) |
+| Agent B | the-internet.herokuapp.com (upload / login / dynamic_loading) | uploadFile, fillInput, click, waitForElement | PASS all 3 — upload, auth, and 5-sec dynamic load verified | snapshotText ~700 tokens/page |
+| Agent C | the-internet.herokuapp.com/tables | snapshotText, js, header click | PASS — 4 rows, sort via click worked | — |
+
+**Helper quirks found (all functional despite):**
+- `click` on pagination links was a silent no-op; `js` click or `gotoAndWait` is the reliable workaround
+- `help('uploadFile'/'click'/'fillInput')` returns "Unknown helper" though helpers work — verify via `snapshotText`/`js` readback, not return value
+- Helpers that mutate state return `undefined` — always verify via secondary read
+
+**Optional companion vetting:** `ego-browser` (ego-lite 1.2.6) parallel Spaces isolated correctly across 3 simultaneous agents; see [COMPANIONS.md](COMPANIONS.md).
+
 ## Known limits (measured)
 
 - **Long GUI chains**: ~3-step GUI sequences complete reliably; 6-step chains can
@@ -36,6 +51,7 @@ Each targets a different capability edge. Escalate in order:
   Prefer `defaults` reads; keep a recipes skill for panes that must be clicked.
 - **Raw clicks on inactive apps** may be rejected by macOS — one failure → switch
   mode (keyboard route or `mac.ax.perform`), per the harness invariants.
+- **ego-browser click helper**: silent on some pagination links — use `js` click as fallback; verify every mutation via readback.
 
 ## Adding probes
 

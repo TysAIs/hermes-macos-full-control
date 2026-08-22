@@ -154,6 +154,16 @@ repo's docs cover disabling it.)
 **Windows / Linux?**
 Not yet — the harness and permissions model are macOS-native by design.
 
+## Optional companion: ego-lite browser
+
+For web-heavy fleets, pair this with [citrolabs/ego-lite](https://github.com/citrolabs/ego-lite) (12.6k★, MIT skill + free macOS app) — a Chromium browser where agents work in isolated **Spaces** while you keep your own tabs, inheriting your real logins without tab-fighting.
+
+- Install: `npx skills add citrolabs/ego-lite` (adds `ego-browser` skill) or see [COMPANIONS.md](COMPANIONS.md)
+- Tested here across 3 parallel agents: pagination handling, file upload, login forms, dynamic loading, and table extraction — all passed functionally (one helper quirk: `click` on pagination was silent, `js` click or `gotoAndWait` is the reliable workaround; `help()` returns unknown for some helpers despite them working — verify via `snapshotText`/`js` readback)
+- Layer-4 web slot in the ladder can point at `ego-browser` when installed, with ToS guardrails (dedicated accounts, human-speed pacing, approval gates — see policy template)
+
+See [TESTS.md](TESTS.md) for the full hard-probe catalog and measured limits.
+
 ## Credits
 
 Built on [browser-use/macos-harness](https://github.com/browser-use/macos-harness) (MIT).

@@ -12,10 +12,16 @@ command -v macos-harness >/dev/null || {
   uv tool install --python 3.12 macos-harness
 }
 
-echo "==> 2/4 Copying skill into $DEST/skills/"
-mkdir -p "$DEST/skills/apple"
-rm -rf "$DEST/skills/apple/macos-harness"
-cp -R "$SRC/skills/apple/macos-harness" "$DEST/skills/apple/macos-harness"
+echo "==> 2/4 Copying skills into $DEST/skills/"
+for skill_src in "$SRC"/skills/*/*; do
+  [ -d "$skill_src" ] || continue
+  category=$(basename "$(dirname "$skill_src")")
+  skill=$(basename "$skill_src")
+  mkdir -p "$DEST/skills/$category"
+  rm -rf "$DEST/skills/$category/$skill"
+  cp -R "$skill_src" "$DEST/skills/$category/$skill"
+  echo "    installed $category/$skill"
+done
 
 echo "==> 3/4 Generating policy file with detected hardware"
 if [ ! -s "$DEST/computer-control-policy.md" ]; then
