@@ -12,7 +12,7 @@ OS_BUILD=$(sw_vers -buildVersion)
 DISK_FREE=$(df -g /System/Volumes/Data | awk 'NR==2{print $4}')
 
 BETA=""
-[[ "$OS_BUILD" == *b* ]] && BETA=" (beta)"
+[[ "$OS_BUILD" =~ [a-z]$ ]] && BETA=" (beta)"
 
 cat <<EOF
 - **Machine**: ${MODEL_ID}, ${CHIP}, ${CORES} cores

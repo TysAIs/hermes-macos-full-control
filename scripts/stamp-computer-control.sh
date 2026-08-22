@@ -9,9 +9,13 @@ set -euo pipefail
 HERMES_HOME="${1:-${HERMES_HOME:-$HOME/.hermes}}"
 POLICY="$HERMES_HOME/computer-control-policy.md"
 [ -f "$POLICY" ] || { echo "ERROR: $POLICY not found" >&2; exit 1; }
+[ -s "$POLICY" ] || { echo "ERROR: $POLICY is empty — reinstall or restore it" >&2; exit 1; }
 
-VERSION=$(grep -m1 '^Version:' "$POLICY" | awk '{print $2}')
-[ -n "$VERSION" ] || { echo "ERROR: no 'Version:' line in $POLICY" >&2; exit 1; }
+VERSION=$(grep -m1 '^Version:' "$POLICY" | awk '{print $2}' || true)
+if [ -z "${VERSION:-}" ]; then
+  echo "ERROR: no 'Version:' line in $POLICY — fix the file, do not hand-edit souls" >&2
+  exit 1
+fi
 
 BLOCK_START="<!-- BEGIN computer-control v$VERSION (generated — do not hand-edit) -->"
 BLOCK_END="<!-- END computer-control -->"
@@ -22,12 +26,18 @@ You operate this Mac via a strict priority ladder: (1) a targeted CLI/skill if o
 STAMP_ONE() {
   local soul="$1"
   [ -f "$soul" ] || { echo "SKIP (missing): $soul"; return; }
-  cp "$soul" "$soul.bak-stamp-$(date +%Y%m%d-%H%M%S)"
+  cp "$soul" "$soul.bak-stamp-$(date +%Y%m%d-%H%M%S)-$$-$RANDOM"
+  # Strip ANY previous stamped block: complete pairs AND orphaned/partial ones
+  # (e.g., a soul truncated mid-block must recover cleanly).
   python3 - "$soul" <<'PYEOF'
 import pathlib, re, sys
 p = pathlib.Path(sys.argv[1])
 t = p.read_text()
 t = re.sub(r"\n?<!-- BEGIN computer-control v.*?<!-- END computer-control -->\n?", "\n", t, flags=re.S)
+# Orphan: a BEGIN whose END was lost (truncation). Cut BEGIN to EOF.
+m = t.find("<!-- BEGIN computer-control")
+if m != -1:
+    t = t[:m]
 p.write_text(t.rstrip("\n") + "\n")
 PYEOF
   { echo ""; echo "$BLOCK_START"; echo "$LADDER"; echo "$BLOCK_END"; } >> "$soul"
@@ -35,6 +45,7 @@ PYEOF
 }
 
 STAMP_ONE "$HERMES_HOME/SOUL.md"
+shopt -s nullglob
 for soul in "$HERMES_HOME"/profiles/*/SOUL.md; do
   STAMP_ONE "$soul"
 done

@@ -1,0 +1,59 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  qa:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntax-check all scripts
+        run: |
+          for f in install.sh scripts/*.sh; do bash -n "$f"; done
+
+      - name: ShellCheck (best-effort)
+        run: |
+          brew install shellcheck || true
+          shellcheck -S warning install.sh scripts/*.sh || \
+            echo "::warning::shellcheck findings above"
+
+      - name: Hardware detector smoke test
+        run: ./scripts/detect-hardware.sh
+
+      - name: Sandbox install + idempotency regression
+        run: |
+          SB="$(mktemp -d)"
+          mkdir -p "$SB/bin" "$SB/Test User/.hermes/profiles/alpha" "$SB/Test User/.hermes/profiles/beta"
+          printf '#!/bin/sh\nexit 0\n' > "$SB/bin/macos-harness" && chmod +x "$SB/bin/macos-harness"
+          export PATH="$SB/bin:$PATH"
+          for p in . profiles/alpha profiles/beta; do
+            printf 'You are TestBot %s.\n' "$p" > "$SB/Test User/.hermes/$p/SOUL.md"
+          done
+
+          HERMES_HOME="$SB/Test User/.hermes" ./install.sh
+          test -f "$SB/Test User/.hermes/skills/apple/macos-harness/SKILL.md"
+          POLICY="$SB/Test User/.hermes/computer-control-policy.md"
+          grep -q '^Version:' "$POLICY"
+          ! grep -q '{{HARDWARE_BASELINE}}' "$POLICY"
+          N1=$(grep -c 'BEGIN computer-control' "$SB/Test User/.hermes/SOUL.md")
+          test "$N1" -eq 1
+
+          # idempotency
+          M1=$(md5 -q "$POLICY")
+          HERMES_HOME="$SB/Test User/.hermes" ./install.sh >/dev/null
+          M2=$(md5 -q "$POLICY")
+          test "$M1" = "$M2"
+          N2=$(grep -c 'BEGIN computer-control' "$SB/Test User/.hermes/SOUL.md")
+          test "$N2" -eq 1
+
+          # orphan-marker recovery
+          head -c 400 "$SB/Test User/.hermes/profiles/alpha/SOUL.md" > "$SB/t.md" && mv "$SB/t.md" "$SB/Test User/.hermes/profiles/alpha/SOUL.md"
+          HERMES_HOME="$SB/Test User/.hermes" ./scripts/stamp-computer-control.sh "$SB/Test User/.hermes" >/dev/null
+          A=$(grep -c 'BEGIN computer-control' "$SB/Test User/.hermes/profiles/alpha/SOUL.md")
+          E=$(grep -c 'END computer-control' "$SB/Test User/.hermes/profiles/alpha/SOUL.md")
+          test "$A" -eq 1 && test "$E" -eq 1
+
+          echo "ALL REGRESSION CHECKS PASSED"

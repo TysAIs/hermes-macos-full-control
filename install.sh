@@ -3,6 +3,8 @@
 set -euo pipefail
 DEST="${HERMES_HOME:-$HOME/.hermes}"
 SRC="$(cd "$(dirname "$0")" && pwd)"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
 
 echo "==> 1/4 Installing macos-harness CLI (uv)"
 command -v macos-harness >/dev/null || {
@@ -16,14 +18,20 @@ rm -rf "$DEST/skills/apple/macos-harness"
 cp -R "$SRC/skills/apple/macos-harness" "$DEST/skills/apple/macos-harness"
 
 echo "==> 3/4 Generating policy file with detected hardware"
-if [ ! -f "$DEST/computer-control-policy.md" ]; then
-  HW=$("$SRC/scripts/detect-hardware.sh")
-  perl -e "\$s=shift; \$h=join(q{}, <>); \$s=~s/\{\{HARDWARE_BASELINE\}\}/\$h/g; print \$s" \
-    "$SRC/computer-control-policy.template.md" <<< "" > /dev/null # noop guard
-  awk -v hw="$HW" '{ gsub(/\{\{HARDWARE_BASELINE\}\}/, hw) }1' \
-    "$SRC/computer-control-policy.template.md" > "$DEST/computer-control-policy.md"
+if [ ! -s "$DEST/computer-control-policy.md" ]; then
+  "$SRC/scripts/detect-hardware.sh" > "$TMP/hardware.md"
+  # Splice hardware block over the {{HARDWARE_BASELINE}} marker line.
+  # awk getline-from-file: fully portable, no escaping pitfalls.
+  awk -v hwfile="$TMP/hardware.md" '
+    /\{\{HARDWARE_BASELINE\}\}/ { while ((getline line < hwfile) > 0) print line; next }
+    { print }
+  ' "$SRC/computer-control-policy.template.md" > "$TMP/policy.md"
+  [ -s "$TMP/policy.md" ] || { echo "ERROR: policy generation produced an empty file" >&2; exit 1; }
+  grep -q '^Version:' "$TMP/policy.md" || { echo "ERROR: generated policy has no Version line" >&2; exit 1; }
+  mkdir -p "$DEST"
+  mv "$TMP/policy.md" "$DEST/computer-control-policy.md"   # atomic: no zombie empty files
 else
-  echo "    policy exists — leaving untouched"
+  echo "    policy exists and is non-empty — leaving untouched"
 fi
 
 echo "==> 4/4 Stamping ladder into all agent SOUL.md files"
