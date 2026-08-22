@@ -18,8 +18,16 @@ Owner: you. Edit ONLY this file, then run `scripts/stamp-computer-control.sh` to
 2. **Known exact AppleScript/JXA** → `osascript`, or `mac.script()` inside the harness.
 3. **Native-app GUI work** → **macos-harness** (skill `apple/macos-harness`): background-window screenshots, PID-targeted clicks/keys, Accessibility tree. No focus-stealing, no cursor movement.
    - System Settings / consent-sheet quirks: keep a recipes skill for the gnarly panes.
-4. **Web tasks** → your configured browser-automation workflow (e.g., CDP against a real signed-in browser).
+4. **Web tasks** → your configured browser-automation workflow (e.g., CDP against a real signed-in browser, or a parallel-space agent browser such as ego-lite if installed).
 5. **Fallback only**: full-screen computer-use / vision drivers.
+
+## Web automation safety rules
+
+- Prefer official APIs over UI automation when they exist.
+- Use dedicated automation accounts on platforms whose ToS restrict automation; keep personal identity out of automated flows.
+- Rate-limit to human speeds; never automate engagement-farming or bulk actions.
+- Human approval gate before: posting/publishing, purchasing, deleting, or any irreversible web action.
+- When unsure about a site's rules, ask before automating.
 
 ## Safety invariants
 
