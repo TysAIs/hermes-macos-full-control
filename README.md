@@ -154,13 +154,25 @@ repo's docs cover disabling it.)
 **Windows / Linux?**
 Not yet — the harness and permissions model are macOS-native by design.
 
-## Optional companion: ego-lite browser
+## Web automation: browser-use + cua-driver (native, open source)
 
-For web-heavy fleets, pair this with [citrolabs/ego-lite](https://github.com/citrolabs/ego-lite) (12.6k★, MIT skill + free macOS app) — a Chromium browser where agents work in isolated **Spaces** while you keep your own tabs, inheriting your real logins without tab-fighting.
+Web tasks route through Hermes-native, open-source tooling — no third-party
+closed-source browsers:
 
-- Install: `npx skills add citrolabs/ego-lite` (adds `ego-browser` skill) or see [COMPANIONS.md](COMPANIONS.md)
-- Tested here across 3 parallel agents: pagination handling, file upload, login forms, dynamic loading, and table extraction — all passed functionally (one helper quirk: `click` on pagination was silent, `js` click or `gotoAndWait` is the reliable workaround; `help()` returns unknown for some helpers despite them working — verify via `snapshotText`/`js` readback)
-- Layer-4 web slot in the ladder can point at `ego-browser` when installed, with ToS guardrails (dedicated accounts, human-speed pacing, approval gates — see policy template)
+- **browser-use** — `browser_exec` tool / `browser-use` CLI. Automates real
+  browser sessions (headless or CDP-attached) for page automation, extraction,
+  form-filling, and multi-step flows.
+- **cua-driver** — `computer_use` tool / `cua-driver` CLI. Full desktop +
+  browser control for GUI-level tasks needing pixel/coordinate input (consent
+  dialogs, canvas apps, native UI).
+- **Brave CDP** — `~/bin/brave-cdp.sh` (port 9222) when a task needs the user's
+  live logged-in Brave session. Brave is the user's browser of record; the
+  agent never opens a separate closed-source browser.
+- **Never** install or route through ego-lite / citrolabs — closed source,
+  heavy (48+ processes, 5.5GB RAM observed), and superseded by the stack above.
+
+Install: both CLIs ship with the Hermes Agent setup (`hermes setup tools`); the
+`browser-use` and `computer_use` toolsets are enabled by default in config.
 
 See [TESTS.md](TESTS.md) for the full hard-probe catalog and measured limits.
 

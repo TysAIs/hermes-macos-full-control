@@ -40,7 +40,8 @@ Each targets a different capability edge. Escalate in order:
 - `help('uploadFile'/'click'/'fillInput')` returns "Unknown helper" though helpers work — verify via `snapshotText`/`js` readback, not return value
 - Helpers that mutate state return `undefined` — always verify via secondary read
 
-**Optional companion vetting:** `ego-browser` (ego-lite 1.2.6) parallel Spaces isolated correctly across 3 simultaneous agents; see [COMPANIONS.md](COMPANIONS.md).
+**Companion vetting:** browser-use (`browser_exec`) + cua-driver (`computer_use`)
+route web tasks with no third-party browser dependency; see [COMPANIONS.md](COMPANIONS.md).
 
 ## Known limits (measured)
 
@@ -51,7 +52,8 @@ Each targets a different capability edge. Escalate in order:
   Prefer `defaults` reads; keep a recipes skill for panes that must be clicked.
 - **Raw clicks on inactive apps** may be rejected by macOS — one failure → switch
   mode (keyboard route or `mac.ax.perform`), per the harness invariants.
-- **ego-browser click helper**: silent on some pagination links — use `js` click as fallback; verify every mutation via readback.
+- **browser-use click helper**: verify every mutation via readback (`js` /
+  snapshot) rather than trusting the return value.
 
 ## Adding probes
 

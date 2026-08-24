@@ -18,7 +18,11 @@ Owner: you. Edit ONLY this file, then run `scripts/stamp-computer-control.sh` to
 2. **Known exact AppleScript/JXA** → `osascript`, or `mac.script()` inside the harness.
 3. **Native-app GUI work** → **macos-harness** (skill `apple/macos-harness`): background-window screenshots, PID-targeted clicks/keys, Accessibility tree. No focus-stealing, no cursor movement.
    - System Settings / consent-sheet quirks: keep a recipes skill for the gnarly panes.
-4. **Web tasks** → your configured browser-automation workflow (e.g., CDP against a real signed-in browser, or a parallel-space agent browser such as ego-lite if installed).
+4. **Web tasks** → your configured browser-automation workflow, in this order:
+   - **browser-use** (`browser_exec` tool / `browser-use` CLI): headless or CDP-attached automation of real browser sessions, ideal for page automation, extraction, form-filling.
+   - **cua-driver** (`computer_use` tool / `cua-driver` CLI): full desktop + browser control for GUI-level tasks that need pixel/coordinate input (consent dialogs, canvas apps, native UI).
+   - Prefer **Brave CDP** (`~/bin/brave-cdp.sh`, port 9222) when the task needs the user's live logged-in Brave session.
+   - Do NOT install or use third-party closed-source browsers (ego-lite / citrolabs) — the stack above is native to Hermes and open source.
 5. **Fallback only**: full-screen computer-use / vision drivers.
 
 ## Web automation safety rules
