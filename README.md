@@ -171,6 +171,21 @@ closed-source browsers:
 - **Never** install or route through ego-lite / citrolabs — closed source,
   heavy (48+ processes, 5.5GB RAM observed), and superseded by the stack above.
 
+### Verified against the ego-lite capability set (2026-08-24)
+
+This stack was live-tested to confirm it covers everything ego-lite provided —
+isolation, login-state reuse, **auth-flow completion**, and cookie extraction:
+
+| Capability | Verified? |
+|---|---|
+| Attach to the user's real logged-in Brave session (CDP 9222) | ✅ |
+| Drive auth flows (fill login form, click, approve consent) | ✅ `fill_input` → readback verified on x.com/login |
+| Tab isolation (agent tabs don't disturb user) | ✅ `Target.createTarget` |
+| Extract cookies/tokens for external tools (xPST etc.) | ✅ `Network.getAllCookies` |
+| Desktop-level GUI (consent dialogs, native UI) | ✅ cua-driver, TCC-gated |
+
+Full evidence: [docs/VERIFIED_REPLACEMENT.md](docs/VERIFIED_REPLACEMENT.md).
+
 Install: both CLIs ship with the Hermes Agent setup (`hermes setup tools`); the
 `browser-use` and `computer_use` toolsets are enabled by default in config.
 
