@@ -40,8 +40,12 @@ Each targets a different capability edge. Escalate in order:
 - `help('uploadFile'/'click'/'fillInput')` returns "Unknown helper" though helpers work — verify via `snapshotText`/`js` readback, not return value
 - Helpers that mutate state return `undefined` — always verify via secondary read
 
-**Companion vetting:** browser-use (`browser_exec`) + cua-driver (`computer_use`)
-route web tasks with no third-party browser dependency; see [COMPANIONS.md](COMPANIONS.md).
+**Companion vetting (verified 2026-08-24):** browser-use (`browser_exec`) attaches
+to the running Brave CDP endpoint on port 9222 — reads the user's real logged-in
+session (cookies present, live page state) — replacing ego-lite's login-state
+reuse with an open-source, native path. cua-driver (`computer_use`) reports
+Accessibility + Screen Recording granted. No third-party browser dependency; see
+[COMPANIONS.md](COMPANIONS.md).
 
 ## Known limits (measured)
 
